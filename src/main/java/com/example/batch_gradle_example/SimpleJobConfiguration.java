@@ -2,11 +2,10 @@ package com.example.batch_gradle_example;
 
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -18,17 +17,32 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RequiredArgsConstructor
-public class JobConfiguration {
+public class SimpleJobConfiguration {
 
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    public Job batchJob1() {
-        return this.jobBuilderFactory.get("batchJob1")
-                .incrementer(new RunIdIncrementer())
+    public Job batchJob() {
+        return this.jobBuilderFactory.get("batchJob")
                 .start(step1())
                 .next(step2())
+//                .incrementer(new RunIdIncrementer())
+                .incrementer(new CustomJobParametersIncrementer())
+                .validator(new CustomJobParametersValidator())
+//                .validator(new DefaultJobParametersValidator(new String[]{"name"}, new String[]{"count"}))
+                .preventRestart()
+                .listener(new JobExecutionListener() {
+                    @Override
+                    public void beforeJob(JobExecution jobExecution) {
+        
+                    }
+    
+                    @Override
+                    public void afterJob(JobExecution jobExecution) {
+        
+                    }
+                })
                 .build();
     }
     
@@ -56,25 +70,7 @@ public class JobConfiguration {
                 .build();
     }
     
-    @Bean
-    public Flow flow() {
-        FlowBuilder<Flow> flowFlowBuilder = new FlowBuilder<>("flow");
-        flowFlowBuilder.start(step3())
-                .next(step4())
-                .end();
-        
-        return flowFlowBuilder.build();
-    }
     
-    @Bean
-    public Job batchJob2() {
-        return jobBuilderFactory.get("batchJob2")
-                .start(flow())
-                .next(step2())
-                .next(step1())
-                .end()
-                .build();
-    }
     
     @Bean
     public Step step3() {
