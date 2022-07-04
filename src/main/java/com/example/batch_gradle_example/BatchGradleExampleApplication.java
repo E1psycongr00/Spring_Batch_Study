@@ -1,14 +1,13 @@
 package com.example.batch_gradle_example;
 
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class  BatchGradleExampleApplication {
-
-	public static void main(String[] args) {
-		SpringApplication.run(BatchGradleExampleApplication.class, args);
-	}
-
+public class BatchGradleExampleApplication {
+    
+    public static void main(String[] args) {
+        SpringApplication.run(BatchGradleExampleApplication.class, args);
+    }
+    
 }
