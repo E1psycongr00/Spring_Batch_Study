@@ -8,17 +8,17 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.*;
-import org.springframework.batch.item.support.builder.CompositeItemProcessorBuilder;
+import org.springframework.batch.item.support.ClassifierCompositeItemProcessor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableBatchProcessing
-public class CompositionItemConfig {
+public class ClassifierConfiguration {
     
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
@@ -34,15 +34,16 @@ public class CompositionItemConfig {
     @Bean
     public Step step1() {
         return stepBuilderFactory.get("step1")
-                .<String, String>chunk(10)
+                .<ProcessorInfo, ProcessorInfo>chunk(10)
                 .reader(new ItemReader<>() {
-                    int i = 0;
+                    long i = 0L;
                     
                     @Override
-                    public String read()
+                    public ProcessorInfo read()
                             throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
                         i++;
-                        return i > 10 ? null : "item";
+                        ProcessorInfo processorInfo = ProcessorInfo.builder().id(i).build();
+                        return i > 3L ? null : processorInfo;
                     }
                 }).processor(customItemProcessor())
                 .writer(System.out::println)
@@ -50,13 +51,18 @@ public class CompositionItemConfig {
     }
     
     @Bean
-    public ItemProcessor<? super String, String> customItemProcessor() {
-        List<ItemProcessor<String, String>> itemProcessor = new ArrayList<>();
-        itemProcessor.add(new CustomItemProcessor());
-        itemProcessor.add(new CustomItemProcessor2());
+    public ItemProcessor<? super ProcessorInfo, ProcessorInfo> customItemProcessor() {
+        ClassifierCompositeItemProcessor<ProcessorInfo, ProcessorInfo> processor = new ClassifierCompositeItemProcessor<>();
         
-        return new CompositeItemProcessorBuilder<String, String>()
-                .delegates(itemProcessor)
-                .build();
+        ProcessorClassifier<ProcessorInfo, ItemProcessor<?, ? extends ProcessorInfo>> classifier = new ProcessorClassifier<>();
+        
+        Map<Long, ItemProcessor<ProcessorInfo, ProcessorInfo>> processorMap = new HashMap<>();
+        processorMap.put(1L, new CustomItemProcessor1());
+        processorMap.put(2L, new CustomItemProcessor2());
+        processorMap.put(3L, new CustomItemProcessor3());
+        classifier.setProcessorMap(processorMap);
+        processor.setClassifier(classifier);
+        
+        return processor;
     }
 }
