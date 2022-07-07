@@ -7,12 +7,17 @@ import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
 public class CustomItemReader implements ItemReader<String> {
-    
-    int i = 0;
-    
+
+    private int i = 0;
+
     @Override
-    public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public String read()
+        throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         i++;
-        return i > 3 ? null : "item";
+        if (i == 3) {
+            throw new SkippableException("this exception is skipped");
+        }
+        System.out.println("ItemReader : " + i);
+        return i > 20 ? null : String.valueOf(i);
     }
 }
